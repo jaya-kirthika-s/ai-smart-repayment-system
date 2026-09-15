@@ -28,6 +28,7 @@ UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data.db')
 
 # Load Persisted Models and Metadata
 MODELS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models')
@@ -81,7 +82,7 @@ def loaneligableamount(income_per_month, total_obligations, max_emi_ratio=0.3):
     return round(eligible_loan_amount, 2)
 
 def customer(s):
-    engine = sq.connect("data.db")
+    engine = sq.connect(DB_PATH)
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], s)
     sample = pd.read_csv(file_path)
     sample.to_sql('customer', con=engine, if_exists='append', index=False)
@@ -118,15 +119,7 @@ def repaymentamount(loan_amount_new, income_new, risk_tier="Low Risk"):
     return repayment_options
 
 def customerloan(s, sd):
-    """
-    Main Underwriting & Appraisal Pipeline:
-    - Merges customer profile & loan repayment history
-    - Extracts 7 behavioral & financial features
-    - Runs inference on serialized ML model
-    - Computes XAI decision attributions and Probability of Default
-    - Builds risk-adjusted repayment plans
-    """
-    engine = sq.connect("data.db")
+    engine = sq.connect(DB_PATH)
     customer_file = os.path.join(app.config['UPLOAD_FOLDER'], sd)
     loan_file = os.path.join(app.config['UPLOAD_FOLDER'], s)
 
@@ -277,6 +270,10 @@ def download_sanction_letter():
         print("[!] Error generating PDF:", str(e))
         return jsonify(error=str(e)), 500
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify(status='healthy', service='Smart Repayment AI Backend'), 200
+
 @app.route('/model-metrics', methods=['GET'])
 def get_model_metrics():
     """
@@ -287,7 +284,7 @@ def get_model_metrics():
 @app.route('/reg', methods=['POST'])
 def reg():
     r = request.json
-    s = sq.connect("data.db")
+    s = sq.connect(DB_PATH)
     hashed_password = bcrypt.hashpw(r["password"].encode('utf-8'), bcrypt.gensalt())
     s.execute("create table if not exists user(uid integer primary key autoincrement, name varchar(1000),password varchar(1000),role varchar(100),email varchar(100))")
     s.execute("insert into user (name,password,role,email) values (?,?,?,?)", (r["name"], hashed_password, r["role"], r["email"]))
@@ -297,7 +294,7 @@ def reg():
 @app.route('/', methods=['POST'])
 def log():
     r = request.json
-    s = sq.connect("data.db")
+    s = sq.connect(DB_PATH)
     user = s.execute("SELECT * FROM user WHERE email=?", (r["email"],)).fetchone()
     if user and bcrypt.checkpw(r["password"].encode('utf-8'), user[2]):
         return jsonify({"uid": user[0], "name": user[1], "role": user[3], "email": user[4]})
@@ -307,7 +304,7 @@ def log():
 @app.route('/viewuser', methods=['POST'])
 def viewuser():
     r = request.json
-    s = sq.connect("data.db")
+    s = sq.connect(DB_PATH)
     x = """SELECT 
     c.customerid, 
     cl.loanno, 

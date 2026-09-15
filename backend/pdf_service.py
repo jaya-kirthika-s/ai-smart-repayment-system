@@ -169,15 +169,21 @@ def generate_sanction_letter_pdf(customer_info, decision_data, selected_plan=Non
     elements.append(Paragraph("3. Sanctioned Credit Facility & Repayment Structure", section_heading))
     loan_amount = float(decision_data.get('loanamount', 0))
 
-    if selected_plan:
-        tenure = selected_plan[0]
-        emi = selected_plan[1]
-        tot_interest = selected_plan[2]
-        tot_payment = selected_plan[3]
+    if selected_plan and isinstance(selected_plan, dict):
+        tenure = selected_plan.get('tenure', selected_plan.get(0, 60))
+        emi = selected_plan.get('emi', selected_plan.get(1, 0))
+        tot_interest = selected_plan.get('total_interest', selected_plan.get('tot_interest', selected_plan.get(2, 0)))
+        tot_payment = selected_plan.get('total_payment', selected_plan.get('tot_payment', selected_plan.get(3, 0)))
+    elif selected_plan and isinstance(selected_plan, (list, tuple)):
+        tenure = selected_plan[0] if len(selected_plan) > 0 else 60
+        emi = selected_plan[1] if len(selected_plan) > 1 else 0
+        tot_interest = selected_plan[2] if len(selected_plan) > 2 else 0
+        tot_payment = selected_plan[3] if len(selected_plan) > 3 else 0
     else:
         # Default to first plan if available
         first_plan = decision_data.get('plans', [[60, 0, 0, 0]])[0]
         tenure, emi, tot_interest, tot_payment = first_plan[0], first_plan[1], first_plan[2], first_plan[3]
+
 
     sanction_rows = [
         [Paragraph("<b>Approved Principal:</b>", body_style), Paragraph(f"<b>INR {loan_amount:,.2f}</b>", bold_style),
