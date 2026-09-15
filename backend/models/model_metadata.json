@@ -1,0 +1,45 @@
+{
+    "model_name": "Random Forest Credit Risk & Eligibility Classifier",
+    "version": "1.2.0",
+    "algorithm": "RandomForestClassifier(n_estimators=150, max_depth=10)",
+    "features": [
+        "EMI Amount",
+        "ontime_payment",
+        "offtime_payment",
+        "loan_count",
+        "Income",
+        "Average Monthly Expenditure",
+        "Credit Score"
+    ],
+    "feature_importances": {
+        "EMI Amount": 0.0212,
+        "ontime_payment": 0.4658,
+        "offtime_payment": 0.4712,
+        "loan_count": 0.0,
+        "Income": 0.0103,
+        "Average Monthly Expenditure": 0.0219,
+        "Credit Score": 0.0097
+    },
+    "training_date": "2026-09-05 12:58:57",
+    "metrics": {
+        "accuracy": 1.0,
+        "roc_auc": 1.0,
+        "test_precision_eligible": 1.0,
+        "test_recall_eligible": 1.0,
+        "confusion_matrix": [
+            [
+                4,
+                0
+            ],
+            [
+                0,
+                196
+            ]
+        ]
+    },
+    "sample_counts": {
+        "total": 1000,
+        "train": 800,
+        "test": 200
+    }
+}
